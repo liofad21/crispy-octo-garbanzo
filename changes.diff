@@ -1,0 +1,249 @@
+--- a/app/src/main/AndroidManifest.xml
++++ b/app/src/main/AndroidManifest.xml
+@@ -20,7 +20,7 @@
+     </queries>
+ 
+     <application
+-        android:icon="@mipmap/ic_launcher"
++        android:icon="@drawable/avatar"
+         android:label="@string/app_name"
+         android:supportsRtl="true"
+         android:theme="@android:style/Theme.Material.NoActionBar">
+--- a/app/src/main/java/com/legion/controlcenter/AssistantOverlay.kt
++++ b/app/src/main/java/com/legion/controlcenter/AssistantOverlay.kt
+@@ -104,8 +104,8 @@
+     /** يرجّع الشخصية فوق كل الشبابيك (لما لوحة تانية تتفتح). */
+     fun bringToFront() {
+         val b = bubble ?: return; val lp = bubbleLp ?: return
++        chat?.let { c -> try { val l = c.layoutParams; wm.removeView(c); wm.addView(c, l) } catch (_: Exception) {} }
+         try { wm.removeView(b); wm.addView(b, lp) } catch (_: Exception) {}
+-        chat?.let { c -> try { val l = c.layoutParams; wm.removeView(c); wm.addView(c, l) } catch (_: Exception) {} }
+     }
+ 
+     fun hide() {
+@@ -130,7 +130,7 @@
+             layoutDirection = View.LAYOUT_DIRECTION_RTL
+         }
+         val title = TextView(svc).apply {
+-            text = "ليجين  •  مساعدتك الذكية"; setTextColor(Color.WHITE); textSize = 15f
++            text = "Raven  •  مساعدتك الذكية"; setTextColor(Color.WHITE); textSize = 15f
+             typeface = Typeface.create("sans-serif-medium", Typeface.NORMAL)
+         }
+         root.addView(title)
+@@ -167,7 +167,7 @@
+             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+         }
+         wm.addView(root, lp)
+-        if (tv.text.isEmpty()) say("ليجين", "أهلاً! أنا ليجين. اطلبي أو اطلب أي حاجة في التابلت: السطوع، الصوت، الواي فاي، فتح تطبيق، أي حاجة.")
++        if (tv.text.isEmpty()) say("Raven", "أهلاً! أنا Raven. اطلبي أو اطلب أي حاجة في التابلت: السطوع، الصوت، الواي فاي، فتح تطبيق، أي حاجة.")
+         bringToFront()
+     }
+ 
+@@ -192,9 +192,9 @@
+     }
+ 
+     private fun ask(text: String) {
+-        if (busy) { say("ليجين", "ثانية واحدة، بخلص اللي في إيدي."); return }
++        if (busy) { say("Raven", "ثانية واحدة، بخلص اللي في إيدي."); return }
+         if ((prefs.getString("gemini_key", "") ?: "").isBlank()) {
+-            say("ليجين", "محتاجة مفتاح Gemini API. افتح تطبيق Legion Control Center وحطه في خانة المساعد.")
++            say("Raven", "محتاجة مفتاح Gemini API. افتح تطبيق Legion Control Center وحطه في خانة المساعد.")
+             return
+         }
+         say("إنت", text)
+@@ -202,7 +202,7 @@
+         thread {
+             try {
+                 val reply = client.chat(text)
+-                ui.post { say("ليجين", reply) }
++                ui.post { say("Raven", reply) }
+                 speak(reply)
+             } catch (e: Exception) {
+                 val msg = when {
+@@ -210,7 +210,7 @@
+                     e.message?.startsWith("HTTP 429") == true -> "وصلنا لحد الاستخدام المجاني لـ Gemini. جرّب بعد شوية. (${e.message})"
+                     else -> "حصل خطأ: ${e.message}"
+                 }
+-                ui.post { say("ليجين", msg) }
++                ui.post { say("Raven", msg) }
+             } finally { busy = false }
+         }
+     }
+@@ -303,9 +303,9 @@
+     // ================= المايك (سماع) =================
+     private fun listen() {
+         if (svc.checkSelfPermission("android.permission.RECORD_AUDIO") != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+-            say("ليجين", "محتاجة صلاحية المايك. افتح التطبيق واضغط 'صلاحية المايك'."); return
+-        }
+-        if (!SpeechRecognizer.isRecognitionAvailable(svc)) { say("ليجين", "خدمة التعرف على الصوت مش متاحة على الجهاز."); return }
++            say("Raven", "محتاجة صلاحية المايك. افتح التطبيق واضغط 'صلاحية المايك'."); return
++        }
++        if (!SpeechRecognizer.isRecognitionAvailable(svc)) { say("Raven", "خدمة التعرف على الصوت مش متاحة على الجهاز."); return }
+         stopSpeaking()
+         recognizer?.destroy()
+         val r = SpeechRecognizer.createSpeechRecognizer(svc)
+@@ -315,12 +315,12 @@
+             override fun onResults(b: Bundle?) {
+                 micBtn?.on = false
+                 val t = b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
+-                if (!t.isNullOrBlank()) ask(t) else say("ليجين", "ماسمعتش حاجة، جرّب تاني.")
++                if (!t.isNullOrBlank()) ask(t) else say("Raven", "ماسمعتش حاجة، جرّب تاني.")
+             }
+             override fun onPartialResults(b: Bundle?) {
+                 b?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()?.let { input?.setText(it) }
+             }
+-            override fun onError(e: Int) { micBtn?.on = false; say("ليجين", "ماسمعتش كويس (كود $e)، جرّب تاني.") }
++            override fun onError(e: Int) { micBtn?.on = false; say("Raven", "ماسمعتش كويس (كود $e)، جرّب تاني.") }
+             override fun onReadyForSpeech(p: Bundle?) {}
+             override fun onBeginningOfSpeech() {}
+             override fun onRmsChanged(v: Float) {}
+--- a/app/src/main/java/com/legion/controlcenter/ControlAccessibilityService.kt
++++ b/app/src/main/java/com/legion/controlcenter/ControlAccessibilityService.kt
+@@ -23,6 +23,23 @@
+     private var trigger: View? = null
+     private var monitor: MonitorOverlay? = null
+     private var assistant: AssistantOverlay? = null
++    private var gameTools: GameToolsOverlay? = null
++    fun openRaven() {
++        dev.prefs.edit().putBoolean("assistant_on", true).apply()
++        assistant?.show(); assistant?.toggleChat(); assistant?.bringToFront()
++    }
++    fun openGameTool(mode: String) {
++        hidePanel()
++        val tools = gameTools ?: GameToolsOverlay(this, dev).also { gameTools = it }
++        tools.open(mode)
++        assistant?.bringToFront()
++    }
++    override fun onKeyEvent(event: android.view.KeyEvent): Boolean {
++        val action = dev.prefs.getString("key_map_${event.keyCode}", null) ?: return false
++        if (!dev.prefs.getBoolean("key_mapping_on", false)) return false
++        if (event.action == android.view.KeyEvent.ACTION_UP) dev.globalAction(action)
++        return true
++    }
+     private var lastShow = 0L
+     @Volatile private var suppress = false
+     private val handler = Handler(Looper.getMainLooper())
+@@ -158,7 +175,7 @@
+     fun isMonitorOn() = monitor?.isShowing == true
+ 
+     override fun onDestroy() {
+-        hidePanel(); monitor?.hide(); assistant?.hide()
++        hidePanel(); monitor?.hide(); assistant?.hide(); gameTools?.close()
+         trigger?.let { try { wm.removeView(it) } catch (_: Exception) {} }
+         instance = null
+         super.onDestroy()
+--- a/app/src/main/java/com/legion/controlcenter/ControlPanel.kt
++++ b/app/src/main/java/com/legion/controlcenter/ControlPanel.kt
+@@ -120,7 +120,7 @@
+         }
+         addView(scroll, FrameLayout.LayoutParams(panelW, -1, Gravity.END).apply { setMargins(0, d(26), d(12), d(14)) })
+ 
+-        val col = LinearLayout(svc).apply { orientation = LinearLayout.VERTICAL; setPadding(d(14), d(10), d(14), d(16)) }
++        val col = LinearLayout(svc).apply { orientation = LinearLayout.VERTICAL; setPadding(d(14), d(10), d(14), d(64)) }
+         scroll.addView(col)
+ 
+         val logo = ImageView(svc).apply { setImageResource(R.drawable.logo); scaleType = ImageView.ScaleType.FIT_CENTER }
+@@ -141,6 +141,16 @@
+             col.put(memoryRow(), 8); col.put(perfSection(), 10); col.put(refreshSection(), 8)
+             col.put(gameSection(), 8); col.put(mediaSection(), 10)
+         }
++        fun ornament(res: Int, height: Int, gravity: Int) {
++            val v = ImageView(svc).apply {
++                setImageResource(res); scaleType = ImageView.ScaleType.FIT_XY
++                isClickable = false; importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO
++            }
++            addView(v, FrameLayout.LayoutParams(panelW, d(height), gravity or Gravity.END).apply { marginEnd = d(12) })
++        }
++        ornament(R.drawable.ornament_top, 28, Gravity.TOP)
++        ornament(R.drawable.ornament_bottom, 52, Gravity.BOTTOM)
++        art.bringToFront()
+         refreshAll()
+         if (animateIn) {
+             alpha = 0f; translationY = -d(24).toFloat()
+@@ -326,14 +336,25 @@
+         val monitorBtn = GlassButton(svc, GlassButton.Shape.CARD, Glyphs.get(svc, R.drawable.g_perfmon), "Performance Monitor")
+         monitorBtn.setOnClickListener { svc.toggleMonitor(); postDelayed({ refreshAll() }, 200) }
+         refreshers += { monitorBtn.on = svc.isMonitorOn() }
+-        val assistant = GlassButton(svc, GlassButton.Shape.CARD, Glyphs.get(svc, R.drawable.g_assistant), "Game Assistant")
+-        assistant.setOnClickListener {
+-            val i = svc.packageManager.getLaunchIntentForPackage("com.google.android.play.games")
+-            if (i != null) openIntent(i) else toast("Play Games مش متسطّب")
+-        }
+-        fun soon(n: String, r: Int) = GlassButton(svc, GlassButton.Shape.CARD, Glyphs.get(svc, r), n).apply { setOnClickListener { toast("$n — قريبًا") } }
+-        box.addView(btnRow(listOf(assistant, monitorBtn, soon("Floating Window", R.drawable.g_floating),
+-            soon("Key Mapping", R.drawable.g_keymap), soon("Macros", R.drawable.g_macros)), 2))
++        val raven = LinearLayout(svc).apply {
++            orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER
++            background = Ui.glass(svc, 16f)
++            val avatar = ImageView(svc).apply {
++                setImageResource(R.drawable.avatar); scaleType = ImageView.ScaleType.FIT_CENTER
++            }
++            addView(avatar, LinearLayout.LayoutParams(d(48), d(48)))
++            addView(tv("Raven", 11.5f, true))
++            contentDescription = "Raven AI"
++            setOnClickListener { svc.openRaven() }
++        }
++        fun tool(label: String, res: Int, mode: String) =
++            GlassButton(svc, GlassButton.Shape.CARD, Glyphs.get(svc, res), label).apply {
++                setOnClickListener { svc.openGameTool(mode) }
++            }
++        box.addView(btnRow(listOf(raven, monitorBtn,
++            tool("Floating Window", R.drawable.g_floating, "floating"),
++            tool("Key Mapping", R.drawable.g_keymap, "keys"),
++            tool("Macros", R.drawable.g_macros, "macros")), 2))
+         return box
+     }
+ 
+--- a/app/src/main/java/com/legion/controlcenter/GeminiClient.kt
++++ b/app/src/main/java/com/legion/controlcenter/GeminiClient.kt
+@@ -15,7 +15,7 @@
+         const val VOICE = "Kore"
+         private const val BASE = "https://generativelanguage.googleapis.com/v1beta/models/"
+ 
+-        private const val SYSTEM = "إنتي \"ليجين\"، مساعدة ذكية بصوت بنت جوه تابلت Lenovo Legion Y700. " +
++        private const val SYSTEM = "إنتي \"Raven\"، مساعدة ذكية بصوت بنت جوه تابلت Lenovo Legion Y700. " +
+                 "اتكلمي بالعامية المصرية بأسلوب لطيف وواثق ومختصر (جملة أو اتنين في الغالب) لأن ردك بيتقرأ بصوت. " +
+                 "لو المستخدم طلب حاجة في التابلت (سطوع، صوت، واي فاي، بلوتوث، تشغيل تطبيق، ميديا، لقطة شاشة، أداء...) نفّذيها بالأدوات المتاحة الأول وبعدين قوليله اللي حصل بجملة قصيرة. " +
+                 "لو الأداة رجّعت إن الحاجة مش متاحة أو فشلت، قولي كده بصراحة. ماتختلقيش نتايج. " +
+--- a/app/src/main/java/com/legion/controlcenter/MainActivity.kt
++++ b/app/src/main/java/com/legion/controlcenter/MainActivity.kt
+@@ -82,7 +82,7 @@
+         ai.addView(LinearLayout(this).apply {
+             gravity = Gravity.CENTER_VERTICAL
+             addView(ImageView(this@MainActivity).apply { setImageResource(R.drawable.avatar) }, LinearLayout.LayoutParams(d(56), d(56)))
+-            addView(tv("ليجين — المساعدة الذكية", 17f, true).apply { setPadding(d(12), 0, 0, 0) })
++            addView(tv("Raven — المساعدة الذكية", 17f, true).apply { setPadding(d(12), 0, 0, 0) })
+         })
+         ai.put(tv("مساعدة بصوت بنت (Gemini) بتنفّذ أوامر التابلت: السطوع، الصوت، الواي فاي، فتح التطبيقات، الميديا وغيره. الشخصية بتفضل عايمة فوق أي تطبيق، اسحبها لأي مكان وإضغط عليها للكلام.", 13f, false, Ui.TEXT_DIM), 8)
+         val key = EditText(this).apply {
+--- a/app/src/main/java/com/legion/controlcenter/Widgets.kt
++++ b/app/src/main/java/com/legion/controlcenter/Widgets.kt
+@@ -108,11 +108,11 @@
+     }
+ 
+     override fun onDraw(c: Canvas) {
+-        val s = max(width / bmp.width.toFloat(), height / bmp.height.toFloat())
+-        val dx = -(bmp.width * s - width) * 0.45f
+-        val dy = -(bmp.height * s - height) * 0.10f
++        val s = minOf(width / bmp.width.toFloat(), height / bmp.height.toFloat())
++        val dx = (width - bmp.width * s) / 2f
++        val dy = (height - bmp.height * s) / 2f
+         m.setScale(s, s); m.postTranslate(dx, dy)
+         c.drawBitmap(bmp, m, paint)
+-        c.drawRect(0f, 0f, width.toFloat(), height.toFloat(), fade)
++        // Keep the full visible reference art without a fading edge.
+     }
+ }
+--- a/app/src/main/res/xml/accessibility_service_config.xml
++++ b/app/src/main/res/xml/accessibility_service_config.xml
+@@ -2,8 +2,9 @@
+ <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+     android:accessibilityEventTypes="typeWindowStateChanged"
+     android:accessibilityFeedbackType="feedbackGeneric"
+-    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds"
++    android:accessibilityFlags="flagRetrieveInteractiveWindows|flagReportViewIds|flagRequestFilterKeyEvents"
+     android:canRetrieveWindowContent="true"
++    android:canRequestFilterKeyEvents="true"
+     android:notificationTimeout="50"
+     android:description="@string/service_desc"
+     android:settingsActivity=".MainActivity" />
